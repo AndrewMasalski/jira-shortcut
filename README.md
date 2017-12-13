@@ -1,10 +1,12 @@
-jira-shortcut
+jira-shortcut for Exadel
 =============
-
-Chrome extension. https://chrome.google.com/webstore/detail/jira-shortcut/kjofpimpbjninggehnclcgkgniacejha
 
 ### build ##
 To build the extension use:
 ```
 ./build.sh
+```
+or
+```
+./build.cmd
 ```
