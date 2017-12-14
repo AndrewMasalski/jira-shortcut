@@ -1,60 +1,57 @@
 <html>
 <head>
-  <title>JIRA ShortCut Options</title>
-  <script src="js/config.js"></script>
-  <script src="js/rule.js"></script>
-  <script src="js/options.js"></script>
-  <link rel="stylesheet" href="css/options.css">
+    <title>JIRA ShortCut Options</title>
+    <script src="lib/jquery-3.2.1.slim.min.js"></script>
+    <script src="lib/rivets.bundled.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/rule.js"></script>
+    <script src="js/options.js"></script>
+    <link rel="stylesheet" href="css/options.css">
 </head>
 
 <body>
-  <form id='rule_template' action="javascript:void(0);" >
+<form id='rule_template' action="javascript:void(0);">
     <p>
-    <label for='test_url'>&nbsp;&nbsp;&nbsp;&nbsp;Test Url: &nbsp;</label>
-    <input type='text' data-id='test_url' />
+        <label for='test_url'>&nbsp;&nbsp;&nbsp;&nbsp;Test Url: &nbsp;</label>
+        <input type='text' data-id='test_url' rv-value="test_url"/>
     </p>
 
     <p>
-    <label for='test_title'>&nbsp;&nbsp;&nbsp;Test Title:&nbsp;</label>
-    <input type='text' data-id='test_title' />
+        <label for='test_title'>&nbsp;&nbsp;&nbsp;Test Title:&nbsp;</label>
+        <input type='text' data-id='test_title' rv-value="test_title"/>
     </p>
 
     <p>
-    <label for='url_pattern'>Url pattern: &nbsp;</label>
-    <input data-id='url_pattern' />
-    <span data-id='test_url_validation' data-valid="Ok" data-invalid="Does not match">
+        <label for='url_pattern'>Url pattern: &nbsp;</label>
+        <input data-id='url_pattern' rv-value="url_pattern"/>
+        <span data-id='test_url_validation' data-valid="Ok" data-invalid="Does not match">
       &nbsp;
     </span>
     </p>
 
     <p>
-    <label for='title_pattern'>Title pattern:</label>
-    <input data-id='title_pattern' />
+        <label for='title_pattern'>Title pattern:</label>
+        <input data-id='title_pattern' rv-value="title_pattern"/>
     </p>
 
     <p>
-    <label for='out_pattern'>Out pattern:&nbsp;</label>
-    <input data-id='out_pattern' />
-    <br>
-    <small>Hint: you can use special pattern '$url' to paste page url</small>
-    <br>
-    <small>Hint: if your pattern starts with '$html:' then you can format your pattern as html content</small>
+        <label for='out_pattern'>Out pattern:&nbsp;</label>
+        <input data-id='out_pattern'  rv-value="out_pattern"/>
     </p>
 
     <br>
     <p>
-    <strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result: &nbsp;</strong>
-    <span class='result-output' data-id='result'>&nbsp;</span>
+        <strong>Result:</strong>
+        <span class='result-output' data-id='result' id="result"></span>
     </p>
     <br>
     <div>
-      <button type='button' data-id="save">Save</button>
-      <button type='button' data-id="load">Load</button>
-      <button type='button' data-id="reset">Defaults</button>
-      <button type='button' data-id="remove">Remove</button>
-      <strong data-id="status">&nbsp;</strong>
+        <button type='button' data-id="test" id="test">Test</button>
+        <button type='button' data-id="save" id="save">Save</button>
+        <button type='button' data-id="reset" id="reset">Defaults</button>
+        <!--<button type='button' data-id="clear" id="clear">Clear</button>-->
+        <strong data-id="status">&nbsp;</strong>
     </div>
-  </form>
-  <button type='button' id="add_rule">Add rule</button>
+</form>
 </body>
 </html>

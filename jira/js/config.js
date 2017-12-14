@@ -1,151 +1,110 @@
-function escape_html(html){
-  var escapeEl = document.createElement('textarea');
-  escapeEl.textContent = html;
-  return escapeEl.innerHTML;
-};
+var RULE_ID = 'jira-shortcut-rule';
+var STORAGE = chrome.storage.local;
 
-Config = {
-  migrate_old_config: function() {
-    if (localStorage.getItem('pattern')){
-      var rule = new RuleConfig();
-      rule.set('test_url', "Please specify the Url"); // was not stored in 4.5.0
-      rule.set('test_title', localStorage['example_title']);
-      rule.set('url_pattern', localStorage['url_pattern']);
-      rule.set('title_pattern', localStorage['pattern']);
-      rule.set('out_pattern', localStorage['replacement']);
-      localStorage.clear();
-      rule.save();
+Storage = {
+    get: function(cb) {
+        STORAGE.get(RULE_ID, function(data) {
+            console.log('storage.get:', data);
+            cb(data['jira-shortcut-rule']);
+        });
+    },
+    save: function(value, cb) {
+        var data = {};
+        data[RULE_ID] = value;
+        STORAGE.set(data, function() {
+            console.log('storage.set:', data);
+            cb(data);
+        });
+    },
+    clear: function(cb) {
+        cb = cb || $.noop;
+        STORAGE.clear(function() {
+            console.log('storage.clear');
+            cb();
+        });
     }
-  },
-
-  get: function(key){
-    return localStorage.getItem(key);
-  },
-
-  set: function(key, value){
-    localStorage.setItem(key, value);
-  },
-
-  remove: function(key){
-    localStorage.removeItem(key);
-  },
-
-  keys: function() {
-    var keys = [];
-    for(var key in localStorage) {
-      keys.push(key)
-    }
-    return keys.sort();
-  },
-
-  removeAll: function(){
-    localStorage.clear();
-  }
 };
 
 BgConfig = {
-  rules: [],
-  init : function() {
-    BgConfig.load_rules();
-  },
+    rule: {},
+    init: function(cb) {
+        BgConfig.rule = new RuleConfig();
+        BgConfig.rule.load(cb);
+    },
 
-  force_reload: function() {
-    chrome.runtime.getBackgroundPage(function(bg){ bg.init(); });
-  },
+    force_reload: function() {
+        chrome.runtime.getBackgroundPage(function(bg) { bg.init(); });
+    },
 
-  match: function(url){
-    for(var i in BgConfig.rules) {
-      if (BgConfig.rules[i].match(url)){
-        return true;
-      }
+    match: function(url) {
+        return !!BgConfig.rule.match(url);
+    },
+
+    apply: function(url, title) {
+        var result = [];
+        if (BgConfig.rule.match(url)) {
+            result.push(BgConfig.rule.apply(url, title))
+        }
+        return result;
     }
-    return false;
-  },
-
-  load_rules: function(){
-    var rules = []
-    Config.keys().forEach(function(rule_id){
-      rules.push(new RuleConfig(rule_id))
-    })
-    BgConfig.rules = rules;
-  },
-
-  apply: function(url, title) {
-    var result = [];
-    for(var i in BgConfig.rules) {
-      var rule = BgConfig.rules[i];
-      if (rule.match(url)){
-        result.push(rule.apply(url, title))
-      }
-    }
-    return result;
-  }
 };
 
-RuleConfig = function(id){
-  this.id = id;
-  this.defaults = {
-    test_url : 'https://issues.apache.org/jira/browse/HADOOP-3629',
-    test_title : '[HADOOP-3629] Document the metrics produced by hadoop - JIRA',
-    url_pattern : '(jira|tickets)*/browse/',
-    title_pattern : '^\\[#?([^\\]]+)\\](.*)( -[^-]+)$',
-    out_pattern : '$html:<a href="$url">$1:$2</a>'
-  }
-  this.fields = {};
+RuleConfig = function() {
+    var fields = {};
+    var result = '[HDP-3629] Document the metrics';
+    var defaults = {
+        test_url: 'https://issues.apache.org/jira/browse/HADOOP-3629',
+        test_title: '[HDP-3629] Document the metrics - Project Management - JIRA',
+        url_pattern: 'jira/browse/',
+        title_pattern: '^\\[([^\\]]+)\\](.*)( -.*)( -.*)$',
+        out_pattern: '[$1]$2'
+    };
 
-  this.init = function () {
-    if(!this.id) {
-      this.id = 'rule_' + Date.now();
-    }
-    this.load();
-  }
+    this.load = function(cb) {
+        var self = this;
+        Storage.get(function(data) {
+            if (!data) {
+                console.log('loading defaults:', data);
+                data = JSON.stringify(defaults);
+            }
+            fields = JSON.parse(data);
+            self.apply();
+            cb(fields);
+        });
+    };
 
-  this.get =  function(field){
-    return this.fields[field];
-  },
+    this.save = function() {
+        var self = this;
+        Storage.save(JSON.stringify(fields), function() {
+            self.apply();
+            BgConfig.force_reload();
+        });
+    };
 
-  this.reset = function() {
-    this.fields = JSON.parse(JSON.stringify(this.defaults));
-  }
+    this.bind = function() {
+        rivets.bind($('#rule_template'), fields);
+    };
 
-  this.set = function(field, value){
-    this.fields[field] = value;
-  },
+    this.reset = function() {
+        fields = defaults;
+        rivets.bind($('#rule_template'), fields);
+    };
 
-  this.save = function (){
-    Config.set(this.id, JSON.stringify(this.fields));
-    BgConfig.force_reload();
-  },
+    this.clear = function() {
+        Storage.clear()
+    };
 
-  this.load = function (){
-    var value = Config.get(this.id);
-    if(!value) {
-      value = JSON.stringify(this.defaults);
-    }
-    this.fields = JSON.parse(value);
-  }
+    this.match = function(url) {
+        console.log('ruleConfig.match:',url);
+        return url.match(new RegExp(fields.url_pattern));
+    };
 
-  this.remove = function() {
-    Config.remove(this.id);
-    BgConfig.force_reload();
-  }
+    this.apply = function() {
+        var title_pattern = new RegExp(fields.title_pattern);
+        var out_pattern = fields.out_pattern;
+        result = fields.test_title.replace(title_pattern, out_pattern);
+        console.log('result:', result);
+        $('#result:first').text(result);
+    };
 
-  this.match = function(url) {
-    return url.match(new RegExp(this.get('url_pattern')));
-  }
-
-  this.apply = function(url, title) {
-    var title_pattern = new RegExp(this.fields.title_pattern);
-    var out_pattern = this.fields.out_pattern;
-    out_pattern = out_pattern.replace(/\$url/g, url);
-    var result = title.replace(title_pattern, out_pattern);
-    result =(
-      result.indexOf("$html:") == 0 ?
-      result.replace("$html:", "") :
-      escape_html(result)
-    );
-    return result;
-  }
-
-  this.init();
-}
+};

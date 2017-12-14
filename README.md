@@ -8,5 +8,5 @@ To build the extension use:
 ```
 or
 ```
-./build.cmd
+./build.ps1
 ```
