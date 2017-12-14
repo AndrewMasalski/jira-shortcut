@@ -1,5 +1,5 @@
 var RULE_ID = 'jira-shortcut-rule';
-var STORAGE = chrome.storage.local;
+var STORAGE = chrome.storage.sync;
 
 Storage = {
     get: function(cb) {
