@@ -6,7 +6,8 @@ function checkForValidUrl(tabId, changeInfo, tab) {
 
 function prepareCopyContent(tab) {
     var data = BgConfig.apply(tab.url, tab.title);
-    return data.join('<br>');
+    return data;
+//    return data.join('<br>');
 }
 
 function init() {

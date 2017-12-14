@@ -29,7 +29,7 @@ BgConfig = {
     rule: {},
     init: function(cb) {
         BgConfig.rule = new RuleConfig();
-        BgConfig.rule.load(cb);
+        BgConfig.rule.load(cb || $.noop);
     },
 
     force_reload: function() {
@@ -37,21 +37,19 @@ BgConfig = {
     },
 
     match: function(url) {
-        return !!BgConfig.rule.match(url);
+        return BgConfig.rule.match(url);
     },
 
     apply: function(url, title) {
-        var result = [];
         if (BgConfig.rule.match(url)) {
-            result.push(BgConfig.rule.apply(url, title))
+            return BgConfig.rule.apply(title)
         }
-        return result;
+        return title;
     }
 };
 
 RuleConfig = function() {
     var fields = {};
-    var result = '[HDP-3629] Document the metrics';
     var defaults = {
         test_url: 'https://issues.apache.org/jira/browse/HADOOP-3629',
         test_title: '[HDP-3629] Document the metrics - Project Management - JIRA',
@@ -68,7 +66,7 @@ RuleConfig = function() {
                 data = JSON.stringify(defaults);
             }
             fields = JSON.parse(data);
-            self.apply();
+            self.test();
             cb(fields);
         });
     };
@@ -76,7 +74,7 @@ RuleConfig = function() {
     this.save = function() {
         var self = this;
         Storage.save(JSON.stringify(fields), function() {
-            self.apply();
+            self.test();
             BgConfig.force_reload();
         });
     };
@@ -95,14 +93,19 @@ RuleConfig = function() {
     };
 
     this.match = function(url) {
-        console.log('ruleConfig.match:',url);
-        return url.match(new RegExp(fields.url_pattern));
+        var res = url.match(new RegExp(fields.url_pattern));
+//        console.log('ruleConfig.match:', res);
+        return url.match(res);
     };
 
-    this.apply = function() {
+    this.apply = function(title) {
         var title_pattern = new RegExp(fields.title_pattern);
         var out_pattern = fields.out_pattern;
-        result = fields.test_title.replace(title_pattern, out_pattern);
+        return title.replace(title_pattern, out_pattern);
+    };
+
+    this.test = function() {
+        var result = this.apply(fields.test_title);
         console.log('result:', result);
         $('#result:first').text(result);
     };

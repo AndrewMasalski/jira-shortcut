@@ -4,7 +4,7 @@ var Options = function() {
     });
 
     $('#test').click(function() {
-        BgConfig.rule.apply();
+        BgConfig.rule.test();
     });
     $('#save').click(function() {
         BgConfig.rule.save();
