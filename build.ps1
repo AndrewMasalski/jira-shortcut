@@ -7,5 +7,4 @@ function ZipFiles($sourcedir, $zipfilename)
 	}
 	[System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir, $zipfilename, $compressionLevel, $false)
 }
-
 ZipFiles "jira" "jira.zip"
