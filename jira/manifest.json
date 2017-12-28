@@ -21,7 +21,7 @@
   "commands": {
     "_execute_page_action": {
       "suggested_key": {
-        "default": "Ctrl+X"
+        "default": "Ctrl+U"
       }
     }
   },
